@@ -1,0 +1,218 @@
+---
+title: "Linear Mixed-Effects Models: Application to Autism Data"
+author: "Gabriel Afriyie"
+date: "13/04/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+\section{Abstract}
+
+Linear mixed-effects (LME) modeling is a widely used statistical method
+for analyzing repeated measures or longitudinal data. In this project, autism was chosen as a topic of research since it is a very important health that needs attention. Vineland Socialization Age Equivalent (vsae) and its predictors are evaluated using LME models. To properly visualize the dataset, graphics are produced in both R and Tableau softwares. The LME model with interaction terms is fit for the autism data.  For this analysis, we decided to remove the child-specific random effects associated with the intercept because of the estimation problems, and because there was little variability in the initial VSAE scores for these autistic children at 0 years of age, The final model shows significance of the quadratic time trend and interaction. Model diagnostics revealed that the data required some transformation to ensure normality of residuals and random effects. 
+
+\section{Section 1: Introduction}
+Longitudinal data require that subjects in the study be repeatedly
+measured across time (Diggle, Heagerty, Liang, & Zeger, 2002; Hedeker &
+Gibbons, 2006; Vonesh & Chinchilli, 1997). This is the crucial difference between
+longitudinal data and cross-sectional data, which measures only a single
+outcome for each individual (Diggle et al., 2002). The outcome measured in longitudinal data may be continuous, binary, ordinal, or categorical in nature.
+
+\ The two most commonly used approaches to analyzing longitudinal data
+are referred to as marginal models (population-averaged) and random-effects
+(subject-specific) models. The random-effects model, on the other hand, considers that regression coefficients vary across individuals (Diggle et al., 2002); a process that stems from the assumption that repeated observations are correlated. In basic terms,
+there is an average regression coefficient from which each individual deviates
+given person-specific conditions. Longitudinal data, a special case of repeated measures data, arecharacterized as having both between-subject and within-subject variation, timedependent covariates and missing data (Davis, 2002). Linear mixed-effects model can accommodate these complex features of longitudinal data whereas traditional methods are limited by statistical assumptions. More importantly, the approach allows for explicit modeling of the variation between subjects and within subjects. 
+
+\ This project illustrates fitting linear mixed effects models to the autism data. The data comes from researchers at the University of Michigan as part of a prospective longitudinal study of 214 children. We have a data frame of 612 observations on the following 4 variables:
+
+\begin{itemize}
+
+\item \textit{age}: Age in years (2, 3, 5, 9, 13); the time variable.
+\item \textit{vsae}: Vineland Socialization Age Equivalent: parent-reported socialization, the dependent variable measured at each age.
+\item \textit{sicdegp}: Sequenced Inventory of Communication Development Expressive Group: categorized expressive language score at age 2 years (1 = Low, 2 = Medium, 3 = High).
+\item \textit{childid}: Unique child identifier.
+
+
+\end{itemize}
+
+In the next section, we present data manipulation and graphically explore the autism data. Section 3 describes how the linear mixed model for the autism data was fit. Section 4 discusses the results and findings. We perform model diagnostics in Section 5 and add conclusions and recommendations in Section 6.
+
+\section{Section 2: Data Manipulation}
+
+We use the _dplyr()_ package in R software to subtract 2 from age so that 2 years becomes age=0, as reference age, and hence intercept for the age trend in the linear model makes sense. Note that we also change the numerical variable \textit{sicdegp} to a categorical variable with 3 levels. The levels of \textit{sicdegp} are then renamed as "Low", "Medium" and "High". 
+
+\ We produce graphical description of the data in both Tableau and R. We generate Figure 1 by plotting \textit{vsae} against \textit{age} and split the graph by \textit{childid} and \textit{sicdegp}. We color by \textit{childid}. The plots of the observed VSAE values for individual children in Figure 1 show substantial variation from child to child within each level of SICD group; the VSAE scores of some children tend to increase as the children get older, whereas the scores for other children remain relatively constant. On the other hand, we do not see much variability in
+the initial values of VSAE at age 0 years for any of the levels of SICD group. Therefore, we attribute this variation entirely to random error rather than to between-subject variability and  we will fit our by removing the random child-specific intercepts, while retaining the same fixed effects and the child-specific random effects of age and age-squared.
+
+![VSAE values plotted against age for children in each SICD group.](C:/Users/gafri/Desktop/Winter 2020/Statistical Data Analysis W20/Final project/Fig1.jpg)
+
+\section{Section 3: Model Specification and Analysis}
+With VSAE as the response variable, we fit a quadratic regression model for each child, which includes the fixed effects of age, age-squared, SICD group, the SICD group by age interaction, and the SICD group by age-squared interaction. As already mentioned in the previous section, We also include two random effects associated with each child: a random age effect, and a random age-squared effect, without a random intercept. We fit the model of this form:
+
+$$vsae=\beta_0+\beta_1 age+\beta_2 age^2 + \beta_3 sicdegp + \beta_4
+age*sicdegp+ + \beta_5 age^2*sicdegp + random(age + age^2 -1 | childid) + \varepsilon$$
+
+The first portion of the model formula, $vsae=\beta_0+\beta_1 age+\beta_2 age^2 + \beta_3 sicdegp + \beta_4age*sicdegp+ + \beta_5 age^2*sicdegp$ , defines the continuous response variable (VSAE), and the terms that have fixed effects in the model (including the interactions). The second portion of the model formula, $+ random(age + age^2 -1 | childid)$, indicates the variables that have random effects associated with them (in parentheses).
+The random effects and residuals are all considered to be normally distribted  with mean zero and respective variances. We use the _lmer()_ function in R and SPSS’s mixed procedure to fit the full model. We then perform model selection by passing the results through the _step()_ function of the "lmertest" R package. 
+
+\section{Results and Findings}
+
+After fitting the full model stated in the previous section, the _step()_ function is used to select the model with the least AIC. This selected model is labeled 'fit2' in the Appendix. In this model, the SICD group by age-squared interaction is dropped. We summarize the selected model as follows:
+
+The variance explained by the random effects are different from $0$. This means that the random effects matter and a regular linear model would be inappropriate. The mean predicted VSAE score for children at 0 years of age in the reference category of the SICD group (SICDEGP = Low) is $8.47591$. The effect of one unit increase in a child's age is to increase their _vsae_ by $2.08$ units, assuming any other combination of factor levels. The quadratic trend associated with time (which represented in the variable "age2", shows a significant increase in _vsae_ by $0.109$ units.
+
+ Moreover, for children in the High _sicdegp_ group, _vsae_ increases  over the followup by 4.99 units as compared to the other _sicdegp_ groups. The _sicdegp_ groups, Low and Medium are not statistically different. The interaction term is also significant. We can also find the correlation of fixed effects in the output. The fixed effects and negatively and/or uncorrelated. We test the significance of the random effect variances by the _ranova()_ R function. The output shows that both variances are highly significant. We now do some model diagnosis in the next section.
+ 
+ \section{Diagnostics for the Final Model}
+ 
+ We now check the assumptions for our selected model fitted using REML estimation, using informal graphical procedures in the R software. We first assess the assumption of normality for the residuals in our model. This is done using the _qqnorm()_ function to create normal plots of residuals.  
+ 
+
+ Figure 3 does not show a straight line. This means that the normality assumption is violated. We perform log transformation on the response variable (vsae) to correct this. Figure 4 shows a straight line. This means that the residuals are in the model are now normally distributed. Similarly, we check the assumption of normality for the random effects.  
+ 
+
+Figure 5 also shows that the random effects are normally distributed even without transforming the data.
+
+
+
+
+
+\section{Conclusion}
+
+Linear mixed-effects modeling is a powerful approach to modeling longitudinal data, such as the autism data. This approach has the ability to model both between-subject and within-subject variability through random-effects.  Both time-invariant and time-variant covariates can be accommodated in the model. Our main findings suggest that the _vsae_ score in the high _sicdegp_ increases  over the followup by 4.99 units as compared to the other _sicdegp_ groups. 
+
+Model selection is rarely a perfect and bias-free process. With linear mixed-effects modeling, researchers have to be concerned not only with selecting appropriate covariates for the model, but also choosing the best covariance structure for the random-effects. Given the limitations in the modeling approach and the study design, weare confident in the final model presented. We feel that our findings will significantly contribute to the study and research of autism in children.
+
+\newpage
+
+\section{Reference}
+
+Oti, R., Anderson, D., Risi, S., Pickles, A. & Lord, C., Social Trajectories Among Individuals with Autism Spectrum Disorders, Developmental Psychopathology (under review), 2006.
+
+West, B., Welch, K. & Galecki, A, Linear Mixed Models: A Practical Guide Using Statistical Software, Chapman Hall / CRC Press, first edition, 2006.
+
+Linear Mixed-Effects Models: Applications to the Behavioral Sciences and Adolescent CommunityHealth Lizmarie Gabriela Maldonado
+University of South Florida, lmaldon3@alumni.health.usf.edu
+
+Davis, C. S. (2002). Statistical Methods for the Analysis of Repeated
+Measurements. New York, NY: Springer. 
+
+Diggle, P., Heagerty, P., Liang, K.Y., & Zeger, S. (2002). Analysis of Longitudinal
+Data. New York, NY: Oxford University Press. 
+
+Hedeker, D., & Gibbons, R.D. (2006). Longitudinal Data Analysis. Hoboken, NJ:
+John Wiley & Sons, Inc. 
+
+Vonesh, E. F., & Chinchilli, V. M. (1997). Linear and nonlinear models for the
+analysis of repeated measurements. New York, NY: Marcel Dekker, Inc. 
+
+
+
+\newpage
+
+\section{Appendix}
+
+\textbf(Analysis via R:)
+
+We load the libraries that was required for the analysis.
+
+```{r}
+library(stringr)
+library(dplyr)
+library(corrplot)
+library(pROC)
+library(WWGbook)
+library(klaR)
+library(lme4)
+library(lmerTest)
+library(lattice)
+library(nlme)
+```
+
+Attaching the dataset to be used.
+
+```{r}
+attach(autism)
+```
+
+Recoding the variables as described in Section 2.
+
+```{r}
+df = autism
+df = df %>% mutate(age=age - 2, sicdegp = sicdegp - 1)
+
+df = df %>% mutate(sicdegp=as.factor(sicdegp))
+
+df = df %>% mutate(sicdegp=recode(sicdegp,
+                                     "2"="High",
+                                     "1"="Medium",
+                                     "0"="Low"))
+```
+
+We saved the new dataset by writing it to a csv file.
+
+```{r}
+write.csv(df, file = "C:/Users/gafri/Desktop/Winter 2020/Statistical Data Analysis W20/Final project/autismdf.csv")
+
+```
+
+Creating figure 1 (Plotting vsae score for each child in within the 3 sicdegp group)
+
+```{r}
+autism.gl <- groupedData(vsae ~ age | childid, outer = ~ sicdegp, data = df)
+ # Generate individual profiles in Figure 1.
+   plot(autism.gl, display = "childid", outer = TRUE, aspect = 2,
+         key = F, xlab = "Age (Years)", ylab = "VSAE",
+     
+            main = "Fig. 1: Individual Data by SICD Group")
+```
+
+
+Fitting the linear mixed model
+
+```{r}
+age2=df$age*df$age
+
+fit = lmer(vsae ~ age + age2 + sicdegp + age*sicdegp + age2*sicdegp + (age + age2 -1 | childid), df)
+
+summary(fit)
+```
+
+Stepwise model selection
+
+```{r}
+s1 = step(fit)
+
+s1
+
+fit2=lmer(vsae ~ age + age2 + sicdegp + (age + age2 - 1 | childid) + age:sicdegp,df)
+
+summary(fit2)
+```
+
+
+Testing the significance of random effects of variances of selected model.
+
+```{r}
+ranova(fit2)
+```
+
+Model Diagnostics
+
+```{r}
+qqnorm(residuals(fit2)) 
+
+logvsae = log(df$vsae)
+
+fit3=lmer(logvsae ~ age + age2 + sicdegp + (age + age2 - 1 | childid) + age:sicdegp,df)
+qqnorm(residuals(fit3))
+
+qqnorm(ranef(fit2)$childid[[1]]) 
+
+qqnorm(ranef(fit3)$childid[[1]])
+```
+
